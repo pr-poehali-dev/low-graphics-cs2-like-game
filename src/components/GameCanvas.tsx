@@ -388,7 +388,7 @@ export default function GameCanvas({ mapId, onKill, onDeath, onHealthChange, onA
         en.angle = Math.atan2(dy, dx);
 
         if (en.state !== "patrol") {
-          const spd = en.state === "attack" ? 0.008 : 0.014;
+          const spd = en.state === "attack" ? 0.004 : 0.007;
           const edx = Math.cos(en.angle) * spd;
           const edy = Math.sin(en.angle) * spd;
           const enPos = moveEntity(en.x, en.y, edx, edy, ENEMY_RADIUS);
@@ -442,29 +442,24 @@ export default function GameCanvas({ mapId, onKill, onDeath, onHealthChange, onA
       const halfH = HALF_H + bob;
 
       for (let col = 0; col < W; col++) {
+        // Угол луча — равномерно по углу (не по экрану) чтобы не было зеркал
         const rayAngle = s.pAngle - FOV / 2 + (col / W) * FOV;
         const { dist, side } = castRay(s.px, s.py, rayAngle);
-        const corrDist = dist * Math.cos(rayAngle - s.pAngle); // fish-eye fix
-        zBuffer[col] = corrDist;
+        // DDA уже возвращает перпендикулярное расстояние — fish-eye убираем через cos разницы углов
+        const perpDist = Math.max(0.1, dist * Math.cos(rayAngle - s.pAngle));
+        zBuffer[col] = perpDist;
 
-        const wallH = Math.min(H * 2, (CELL / corrDist) * (W / 1.4));
-        const wallTop = halfH - wallH / 2;
-        const wallBottom = halfH + wallH / 2;
+        const wallH = Math.min(H * 3, H / perpDist);
+        const wallTop    = Math.floor(halfH - wallH / 2);
+        const wallBottom = Math.floor(halfH + wallH / 2);
 
-        // Shading: distance + side darkening
-        const fog = Math.max(0, 1 - corrDist / MAX_DEPTH);
-        const sideDark = side === 1 ? 0.6 : 1.0;
+        const fog = Math.max(0, 1 - perpDist / MAX_DEPTH);
+        const sideDark = side === 1 ? 0.55 : 1.0;
         const shade = fog * sideDark;
 
         const wallColorHex = side === 0 ? mapCfg.wallColors[0] : mapCfg.wallColors[1];
         ctx.fillStyle = shadedColor(wallColorHex, shade);
         ctx.fillRect(col, wallTop, 1, wallBottom - wallTop);
-
-        // Poly-style edge highlight every ~N units
-        if (corrDist < 4 && col % 3 === 0) {
-          ctx.fillStyle = `rgba(255,255,255,${0.03 * fog})`;
-          ctx.fillRect(col, wallTop, 1, wallBottom - wallTop);
-        }
       }
 
       // ── Sprites (enemies) ──
@@ -630,93 +625,253 @@ export default function GameCanvas({ mapId, onKill, onDeath, onHealthChange, onA
   );
 }
 
-// ─── Weapon draw ──────────────────────────────────────────────────────────────
+// ─── Weapon + hands draw ──────────────────────────────────────────────────────
 function drawWeapon(ctx: CanvasRenderingContext2D, W: number, H: number, bobTime: number, muzzleFlash: number, reloadTimer: number) {
-  const bobX = Math.sin(bobTime * 0.5) * 10;
-  const bobY = Math.abs(Math.sin(bobTime)) * 8;
-  const reloadOffset = reloadTimer > 0 ? lerp(0, 80, Math.sin((1 - reloadTimer / 90) * Math.PI)) : 0;
-  const cx = W / 2 + 80 + bobX;
-  const cy = H - 60 + bobY + reloadOffset;
+  const bobX = Math.sin(bobTime * 0.5) * 8;
+  const bobY = Math.abs(Math.sin(bobTime)) * 7;
+  const reloadDip = reloadTimer > 0 ? lerp(0, 90, Math.sin((1 - reloadTimer / 90) * Math.PI)) : 0;
+
+  // Origin point: bottom-right area, weapon held slightly right of center
+  const ox = W / 2 + 60 + bobX;
+  const oy = H + reloadDip + bobY;
 
   ctx.save();
 
-  // Gun body — low poly style
-  ctx.fillStyle = "#3a3a3a";
-  // Main body
+  // ── RIGHT HAND (main grip) ──────────────────────────────────────────────────
+  // Forearm
+  ctx.fillStyle = "#c8845a";
   ctx.beginPath();
-  ctx.moveTo(cx - 80, cy + 20);
-  ctx.lineTo(cx + 40, cy + 20);
-  ctx.lineTo(cx + 50, cy - 10);
-  ctx.lineTo(cx + 20, cy - 30);
-  ctx.lineTo(cx - 60, cy - 30);
-  ctx.lineTo(cx - 80, cy - 10);
+  ctx.moveTo(ox - 20, oy);
+  ctx.lineTo(ox + 20, oy);
+  ctx.lineTo(ox + 10, oy - 120);
+  ctx.lineTo(ox - 30, oy - 110);
+  ctx.closePath();
+  ctx.fill();
+  // Arm shadow/shading
+  ctx.fillStyle = "#a06640";
+  ctx.beginPath();
+  ctx.moveTo(ox + 5, oy);
+  ctx.lineTo(ox + 20, oy);
+  ctx.lineTo(ox + 10, oy - 120);
+  ctx.lineTo(ox, oy - 115);
+  ctx.closePath();
+  ctx.fill();
+  // Sleeve cuff
+  ctx.fillStyle = "#2a3040";
+  ctx.beginPath();
+  ctx.moveTo(ox - 22, oy - 98);
+  ctx.lineTo(ox + 12, oy - 105);
+  ctx.lineTo(ox + 14, oy - 118);
+  ctx.lineTo(ox - 24, oy - 112);
+  ctx.closePath();
+  ctx.fill();
+  // Hand / knuckles
+  ctx.fillStyle = "#c88055";
+  ctx.beginPath();
+  ctx.moveTo(ox - 28, oy - 112);
+  ctx.lineTo(ox + 8,  oy - 118);
+  ctx.lineTo(ox + 6,  oy - 136);
+  ctx.lineTo(ox - 30, oy - 128);
+  ctx.closePath();
+  ctx.fill();
+
+  // ── LEFT HAND (supporting under barrel) ─────────────────────────────────────
+  const lx = ox - 115;
+  const ly = oy - 128;
+  // Forearm
+  ctx.fillStyle = "#c8845a";
+  ctx.beginPath();
+  ctx.moveTo(lx - 18, ly + 10);
+  ctx.lineTo(lx + 18, ly + 10);
+  ctx.lineTo(lx + 30, ly - 80);
+  ctx.lineTo(lx - 5,  ly - 80);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = "#a06640";
+  ctx.beginPath();
+  ctx.moveTo(lx + 5, ly + 10);
+  ctx.lineTo(lx + 18, ly + 10);
+  ctx.lineTo(lx + 30, ly - 80);
+  ctx.lineTo(lx + 15, ly - 78);
+  ctx.closePath();
+  ctx.fill();
+  // Sleeve
+  ctx.fillStyle = "#2a3040";
+  ctx.beginPath();
+  ctx.moveTo(lx - 16, ly - 64);
+  ctx.lineTo(lx + 20, ly - 66);
+  ctx.lineTo(lx + 22, ly - 78);
+  ctx.lineTo(lx - 18, ly - 76);
+  ctx.closePath();
+  ctx.fill();
+  // Hand
+  ctx.fillStyle = "#c88055";
+  ctx.beginPath();
+  ctx.moveTo(lx - 16, ly - 76);
+  ctx.lineTo(lx + 20, ly - 78);
+  ctx.lineTo(lx + 18, ly - 95);
+  ctx.lineTo(lx - 18, ly - 92);
+  ctx.closePath();
+  ctx.fill();
+
+  // ── GUN BODY ────────────────────────────────────────────────────────────────
+  // Stock shadow
+  ctx.fillStyle = "rgba(0,0,0,0.3)";
+  ctx.beginPath();
+  ctx.moveTo(ox - 16, oy - 112);
+  ctx.lineTo(ox + 6,  oy - 118);
+  ctx.lineTo(ox - 24, oy - 150);
+  ctx.lineTo(ox - 50, oy - 148);
+  ctx.closePath();
+  ctx.fill();
+
+  // Main receiver body
+  ctx.fillStyle = "#282828";
+  ctx.beginPath();
+  ctx.moveTo(ox - 14, oy - 118);  // grip top-right
+  ctx.lineTo(ox + 4,  oy - 124);
+  ctx.lineTo(ox - 22, oy - 158);  // rear top
+  ctx.lineTo(ox - 180, oy - 138); // front top
+  ctx.lineTo(ox - 190, oy - 120); // barrel start
+  ctx.lineTo(ox - 18,  oy - 108); // bottom
+  ctx.closePath();
+  ctx.fill();
+
+  // Top rail highlight
+  ctx.fillStyle = "#404040";
+  ctx.beginPath();
+  ctx.moveTo(ox - 22, oy - 158);
+  ctx.lineTo(ox + 4,  oy - 124);
+  ctx.lineTo(ox - 20, oy - 150);
+  ctx.lineTo(ox - 178, oy - 130);
+  ctx.closePath();
+  ctx.fill();
+
+  // Side panel detail
+  ctx.fillStyle = "#1e1e1e";
+  ctx.beginPath();
+  ctx.moveTo(ox - 30, oy - 120);
+  ctx.lineTo(ox - 28, oy - 148);
+  ctx.lineTo(ox - 160, oy - 132);
+  ctx.lineTo(ox - 162, oy - 116);
   ctx.closePath();
   ctx.fill();
 
   // Barrel
-  ctx.fillStyle = "#2a2a2a";
+  ctx.fillStyle = "#1a1a1a";
   ctx.beginPath();
-  ctx.moveTo(cx + 20, cy - 18);
-  ctx.lineTo(cx + 120, cy - 18);
-  ctx.lineTo(cx + 120, cy - 6);
-  ctx.lineTo(cx + 20, cy - 6);
+  ctx.moveTo(ox - 180, oy - 138);
+  ctx.lineTo(ox - 250, oy - 130);
+  ctx.lineTo(ox - 248, oy - 116);
+  ctx.lineTo(ox - 178, oy - 120);
+  ctx.closePath();
+  ctx.fill();
+  // Barrel bottom
+  ctx.fillStyle = "#222";
+  ctx.beginPath();
+  ctx.moveTo(ox - 180, oy - 120);
+  ctx.lineTo(ox - 248, oy - 116);
+  ctx.lineTo(ox - 246, oy - 108);
+  ctx.lineTo(ox - 178, oy - 110);
+  ctx.closePath();
+  ctx.fill();
+
+  // Muzzle tip
+  ctx.fillStyle = "#303030";
+  ctx.beginPath();
+  ctx.moveTo(ox - 248, oy - 136);
+  ctx.lineTo(ox - 260, oy - 133);
+  ctx.lineTo(ox - 258, oy - 106);
+  ctx.lineTo(ox - 246, oy - 108);
+  ctx.closePath();
+  ctx.fill();
+
+  // Magazine
+  ctx.fillStyle = "#222";
+  ctx.beginPath();
+  ctx.moveTo(ox - 80, oy - 108);
+  ctx.lineTo(ox - 60, oy - 112);
+  ctx.lineTo(ox - 65, oy - 68);
+  ctx.lineTo(ox - 90, oy - 64);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = "#1a1a1a";
+  ctx.beginPath();
+  ctx.moveTo(ox - 60, oy - 112);
+  ctx.lineTo(ox - 55, oy - 114);
+  ctx.lineTo(ox - 60, oy - 68);
+  ctx.lineTo(ox - 65, oy - 68);
   ctx.closePath();
   ctx.fill();
 
   // Grip
-  ctx.fillStyle = "#4a3020";
+  ctx.fillStyle = "#1e1e1e";
   ctx.beginPath();
-  ctx.moveTo(cx - 20, cy + 20);
-  ctx.lineTo(cx, cy + 20);
-  ctx.lineTo(cx - 10, cy + 60);
-  ctx.lineTo(cx - 35, cy + 55);
+  ctx.moveTo(ox - 18, oy - 108);
+  ctx.lineTo(ox + 2,  oy - 118);
+  ctx.lineTo(ox - 8,  oy - 60);
+  ctx.lineTo(ox - 30, oy - 50);
   ctx.closePath();
   ctx.fill();
-
-  // Mag
-  ctx.fillStyle = "#252525";
-  ctx.beginPath();
-  ctx.moveTo(cx - 40, cy + 20);
-  ctx.lineTo(cx - 20, cy + 20);
-  ctx.lineTo(cx - 25, cy + 50);
-  ctx.lineTo(cx - 48, cy + 45);
-  ctx.closePath();
-  ctx.fill();
-
-  // Highlight edge
-  ctx.strokeStyle = "#606060";
+  // Grip texture lines
+  ctx.strokeStyle = "#2e2e2e";
   ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.moveTo(cx - 80, cy - 10);
-  ctx.lineTo(cx - 60, cy - 30);
-  ctx.lineTo(cx + 20, cy - 30);
-  ctx.stroke();
+  for (let gi = 0; gi < 5; gi++) {
+    const t = gi / 5;
+    ctx.beginPath();
+    ctx.moveTo(lerp(ox - 18, ox - 8,  t), lerp(oy - 108, oy - 60, t));
+    ctx.lineTo(lerp(ox + 2,  ox - 30, t), lerp(oy - 118, oy - 50, t));
+    ctx.stroke();
+  }
 
-  // Scope
-  ctx.fillStyle = "#1a1a1a";
-  ctx.fillRect(cx - 30, cy - 38, 40, 10);
-  ctx.fillStyle = "#203050";
-  ctx.fillRect(cx - 28, cy - 36, 14, 6);
+  // Iron sight rear
+  ctx.fillStyle = "#404040";
+  ctx.fillRect(ox - 40, oy - 163, 14, 8);
+  ctx.fillStyle = "#0d0d0d";
+  ctx.fillRect(ox - 39, oy - 162, 5, 7);
+  ctx.fillRect(ox - 30, oy - 162, 5, 7);
+  // Iron sight front
+  ctx.fillStyle = "#404040";
+  ctx.fillRect(ox - 196, oy - 145, 8, 12);
+  ctx.fillStyle = "#606060";
+  ctx.fillRect(ox - 194, oy - 144, 4, 5);
 
-  // Muzzle flash
+  // Charging handle
+  ctx.fillStyle = "#333";
+  ctx.fillRect(ox - 10, oy - 142, 16, 7);
+  ctx.fillStyle = "#555";
+  ctx.fillRect(ox - 9, oy - 141, 14, 4);
+
+  // ── MUZZLE FLASH ────────────────────────────────────────────────────────────
   if (muzzleFlash > 0) {
     const alpha = muzzleFlash / 8;
+    const fx = ox - 255;
+    const fy = oy - 122;
     ctx.save();
     ctx.globalAlpha = alpha;
-    ctx.fillStyle = "#ffe080";
+    // Core
+    ctx.fillStyle = "#ffffff";
     ctx.shadowColor = "#ffe080";
-    ctx.shadowBlur = 20;
-    // Star shape
-    for (let i = 0; i < 6; i++) {
-      const a = (i / 6) * Math.PI * 2;
-      const r = 18 + Math.random() * 10;
+    ctx.shadowBlur = 30;
+    ctx.beginPath();
+    ctx.arc(fx, fy, 8, 0, Math.PI * 2);
+    ctx.fill();
+    // Petals
+    ctx.fillStyle = "#ffdd44";
+    for (let i = 0; i < 8; i++) {
+      const a = (i / 8) * Math.PI * 2 + Math.random() * 0.3;
+      const r = 14 + Math.random() * 14;
       ctx.beginPath();
-      ctx.moveTo(cx + 120, cy - 12);
-      ctx.lineTo(cx + 120 + Math.cos(a) * r, cy - 12 + Math.sin(a) * r);
-      ctx.lineTo(cx + 120 + Math.cos(a + 0.3) * 6, cy - 12 + Math.sin(a + 0.3) * 6);
+      ctx.moveTo(fx, fy);
+      ctx.lineTo(fx + Math.cos(a) * r, fy + Math.sin(a) * r);
+      ctx.lineTo(fx + Math.cos(a + 0.25) * r * 0.5, fy + Math.sin(a + 0.25) * r * 0.5);
       ctx.closePath();
       ctx.fill();
     }
+    // Ambient light on gun
+    ctx.globalAlpha = alpha * 0.15;
+    ctx.fillStyle = "#ffe080";
+    ctx.fillRect(ox - 270, oy - 170, 150, 80);
     ctx.restore();
   }
 
