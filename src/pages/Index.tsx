@@ -189,6 +189,7 @@ export default function Index() {
   const [playerAmmo, setPlayerAmmo] = useState(30);
   const [killCount, setKillCount] = useState(0);
   const [isDead, setIsDead] = useState(false);
+  const [gameKey, setGameKey] = useState(0);
 
   const navigate = (s: Screen) => setScreen(s);
 
@@ -202,6 +203,7 @@ export default function Index() {
     setPlayerAmmo(30);
     setKillCount(0);
     setIsDead(false);
+    setGameKey(k => k + 1);
     navigate("game");
   };
 
@@ -414,6 +416,7 @@ export default function Index() {
         <div className="relative w-full h-full" style={{ background: "#0d0f14" }}>
           {/* Живой Canvas */}
           <GameCanvas
+            key={gameKey}
             mapId={selectedMap}
             onKill={handleKill}
             onDeath={handleDeath}
