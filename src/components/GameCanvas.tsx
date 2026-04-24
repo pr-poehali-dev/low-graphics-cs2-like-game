@@ -595,8 +595,8 @@ export default function GameCanvas({ mapId, onKill, onDeath, onHealthChange, onA
       s.frameId = requestAnimationFrame(tick);
     }
 
-    s.frameId = requestAnimationFrame(tick);
     const s = stateRef.current;
+    s.frameId = requestAnimationFrame(tick);
     return () => {
       s.running = false;
       cancelAnimationFrame(s.frameId);
