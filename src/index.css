@@ -4,89 +4,45 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --background: 220 15% 6%;
+    --foreground: 60 10% 90%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card: 220 15% 9%;
+    --card-foreground: 60 10% 90%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover: 220 15% 9%;
+    --popover-foreground: 60 10% 90%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 45 95% 55%;
+    --primary-foreground: 220 15% 6%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 220 15% 14%;
+    --secondary-foreground: 60 10% 90%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 220 15% 14%;
+    --muted-foreground: 220 10% 50%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 15 90% 55%;
+    --accent-foreground: 60 10% 90%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 75% 50%;
+    --destructive-foreground: 60 10% 90%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --border: 220 15% 18%;
+    --input: 220 15% 14%;
+    --ring: 45 95% 55%;
 
-    --radius: 0.5rem;
+    --radius: 0.1rem;
 
-    --sidebar-background: 0 0% 98%;
-
-    --sidebar-foreground: 240 5.3% 26.1%;
-
-    --sidebar-primary: 240 5.9% 10%;
-
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
-  }
-
-  .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    /* Game custom vars */
+    --poly-gold: #e8b84b;
+    --poly-orange: #e05a2b;
+    --poly-dark: #0d0f14;
+    --poly-mid: #151a22;
+    --poly-panel: #1a2030;
+    --poly-border: #2a3448;
+    --poly-text: #c8d4e8;
+    --poly-dim: #5a6880;
   }
 }
 
@@ -97,5 +53,299 @@
 
   body {
     @apply bg-background text-foreground;
+    font-family: "Rajdhani", sans-serif;
+    background-color: var(--poly-dark);
+    color: var(--poly-text);
+    overflow: hidden;
+    user-select: none;
   }
+}
+
+/* Polygon mesh background */
+.poly-bg {
+  background-color: var(--poly-dark);
+  background-image:
+    linear-gradient(rgba(232, 184, 75, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(232, 184, 75, 0.03) 1px, transparent 1px);
+  background-size: 60px 60px;
+}
+
+/* Clip-path geometric panels */
+.clip-diamond {
+  clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+}
+
+.clip-hex {
+  clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+}
+
+.clip-arrow-right {
+  clip-path: polygon(0% 0%, 85% 0%, 100% 50%, 85% 100%, 0% 100%);
+}
+
+.clip-arrow-left {
+  clip-path: polygon(15% 0%, 100% 0%, 100% 100%, 15% 100%, 0% 50%);
+}
+
+.clip-bevel {
+  clip-path: polygon(
+    12px 0%,
+    100% 0%,
+    100% calc(100% - 12px),
+    calc(100% - 12px) 100%,
+    0% 100%,
+    0% 12px
+  );
+}
+
+.clip-bevel-lg {
+  clip-path: polygon(
+    20px 0%,
+    100% 0%,
+    100% calc(100% - 20px),
+    calc(100% - 20px) 100%,
+    0% 100%,
+    0% 20px
+  );
+}
+
+/* Glow effects */
+.glow-gold {
+  box-shadow:
+    0 0 20px rgba(232, 184, 75, 0.3),
+    0 0 60px rgba(232, 184, 75, 0.1);
+}
+
+.glow-orange {
+  box-shadow:
+    0 0 20px rgba(224, 90, 43, 0.4),
+    0 0 60px rgba(224, 90, 43, 0.15);
+}
+
+.text-glow-gold {
+  text-shadow:
+    0 0 20px rgba(232, 184, 75, 0.6),
+    0 0 40px rgba(232, 184, 75, 0.3);
+}
+
+/* Scan line effect */
+.scanlines::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.08) 2px,
+    rgba(0, 0, 0, 0.08) 4px
+  );
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Noise texture overlay */
+.noise::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.4;
+}
+
+/* Animated border */
+@keyframes border-flash {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
+}
+
+.border-flash {
+  animation: border-flash 2s ease-in-out infinite;
+}
+
+/* Fade in */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.4s ease-out forwards;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out forwards;
+}
+
+/* Slide in from left */
+@keyframes slide-in-left {
+  from {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-slide-left {
+  animation: slide-in-left 0.4s ease-out forwards;
+}
+
+/* Stagger delays */
+.delay-100 {
+  animation-delay: 0.1s;
+  opacity: 0;
+}
+.delay-200 {
+  animation-delay: 0.2s;
+  opacity: 0;
+}
+.delay-300 {
+  animation-delay: 0.3s;
+  opacity: 0;
+}
+.delay-400 {
+  animation-delay: 0.4s;
+  opacity: 0;
+}
+.delay-500 {
+  animation-delay: 0.5s;
+  opacity: 0;
+}
+.delay-600 {
+  animation-delay: 0.6s;
+  opacity: 0;
+}
+
+/* Hover scale */
+.hover-scale {
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.hover-scale:hover {
+  transform: scale(1.02);
+}
+
+/* Health bar */
+@keyframes pulse-health {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.pulse-health {
+  animation: pulse-health 1s ease-in-out infinite;
+}
+
+/* Menu item hover */
+.menu-item {
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.menu-item::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--poly-gold);
+  transform: scaleY(0);
+  transition: transform 0.2s ease;
+}
+
+.menu-item:hover::before {
+  transform: scaleY(1);
+}
+
+.menu-item:hover {
+  background: rgba(232, 184, 75, 0.08);
+  padding-left: 1.5rem;
+}
+
+/* Low-poly triangle decoration */
+.poly-triangle {
+  width: 0;
+  height: 0;
+}
+
+/* Weapon card */
+.weapon-card {
+  transition: all 0.2s ease;
+  border: 1px solid var(--poly-border);
+}
+
+.weapon-card:hover,
+.weapon-card.active {
+  border-color: var(--poly-gold);
+  background: rgba(232, 184, 75, 0.06);
+}
+
+/* Map card */
+.map-card {
+  transition: all 0.25s ease;
+  border: 1px solid var(--poly-border);
+  overflow: hidden;
+}
+
+.map-card:hover {
+  border-color: var(--poly-gold);
+  transform: translateY(-4px);
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.5),
+    0 0 20px rgba(232, 184, 75, 0.2);
+}
+
+.map-card.selected {
+  border-color: var(--poly-orange);
+  box-shadow: 0 0 30px rgba(224, 90, 43, 0.3);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--poly-dark);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--poly-border);
+  border-radius: 2px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--poly-gold);
 }
