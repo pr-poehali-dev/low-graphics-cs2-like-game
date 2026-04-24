@@ -271,13 +271,38 @@ export default function GameCanvas({ mapId, onKill, onDeath, onHealthChange, onA
     const grid = mapCfg.grid;
     const ROWS = grid.length;
     const COLS = grid[0].length;
-    const MOVE_SPEED = 0.05;
+    const MOVE_SPEED = 0.03;
     const ROT_SPEED = 0.002;
+    const PLAYER_RADIUS = 0.3;
+    const ENEMY_RADIUS = 0.28;
 
     function isWall(x: number, y: number): boolean {
       const mx = Math.floor(x), my = Math.floor(y);
       if (my < 0 || my >= ROWS || mx < 0 || mx >= COLS) return true;
       return grid[my][mx] === 1;
+    }
+
+    // Проверяет, не касается ли окружность радиуса r центра (cx,cy) стены
+    function collidesWithWall(cx: number, cy: number, r: number): boolean {
+      return (
+        isWall(cx - r, cy - r) || isWall(cx + r, cy - r) ||
+        isWall(cx - r, cy + r) || isWall(cx + r, cy + r) ||
+        isWall(cx,     cy - r) || isWall(cx,     cy + r) ||
+        isWall(cx - r, cy    ) || isWall(cx + r, cy    )
+      );
+    }
+
+    function moveEntity(ox: number, oy: number, dx: number, dy: number, r: number): { x: number; y: number } {
+      const nx = ox + dx;
+      const ny = oy + dy;
+      // Try full move
+      if (!collidesWithWall(nx, ny, r)) return { x: nx, y: ny };
+      // Slide along X
+      if (!collidesWithWall(ox + dx, oy, r)) return { x: ox + dx, y: oy };
+      // Slide along Y
+      if (!collidesWithWall(ox, oy + dy, r)) return { x: ox, y: oy + dy };
+      // Stuck — no move
+      return { x: ox, y: oy };
     }
 
     function castRay(px: number, py: number, angle: number): { dist: number; side: number; wallX: number } {
@@ -333,10 +358,10 @@ export default function GameCanvas({ mapId, onKill, onDeath, onHealthChange, onA
       // ── Movement ──
       const moveF = (s.keys["KeyW"] || s.keys["ArrowUp"]) ? MOVE_SPEED : (s.keys["KeyS"] || s.keys["ArrowDown"]) ? -MOVE_SPEED * 0.6 : 0;
       const moveS = s.keys["KeyA"] ? -MOVE_SPEED * 0.7 : s.keys["KeyD"] ? MOVE_SPEED * 0.7 : 0;
-      const nx = s.px + Math.cos(s.pAngle) * moveF + Math.cos(s.pAngle + Math.PI/2) * moveS;
-      const ny = s.py + Math.sin(s.pAngle) * moveF + Math.sin(s.pAngle + Math.PI/2) * moveS;
-      if (!isWall(nx, s.py)) s.px = nx;
-      if (!isWall(s.px, ny)) s.py = ny;
+      const pdx = Math.cos(s.pAngle) * moveF + Math.cos(s.pAngle + Math.PI / 2) * moveS;
+      const pdy = Math.sin(s.pAngle) * moveF + Math.sin(s.pAngle + Math.PI / 2) * moveS;
+      const newPos = moveEntity(s.px, s.py, pdx, pdy, PLAYER_RADIUS);
+      s.px = newPos.x; s.py = newPos.y;
 
       // Bob
       if (moveF !== 0 || moveS !== 0) s.bobTime += 0.12;
@@ -363,11 +388,11 @@ export default function GameCanvas({ mapId, onKill, onDeath, onHealthChange, onA
         en.angle = Math.atan2(dy, dx);
 
         if (en.state !== "patrol") {
-          const spd = en.state === "attack" ? 0.015 : 0.025;
-          const enx = en.x + Math.cos(en.angle) * spd;
-          const eny = en.y + Math.sin(en.angle) * spd;
-          if (!isWall(enx, en.y)) en.x = enx;
-          if (!isWall(en.x, eny)) en.y = eny;
+          const spd = en.state === "attack" ? 0.008 : 0.014;
+          const edx = Math.cos(en.angle) * spd;
+          const edy = Math.sin(en.angle) * spd;
+          const enPos = moveEntity(en.x, en.y, edx, edy, ENEMY_RADIUS);
+          en.x = enPos.x; en.y = enPos.y;
         }
 
         if (en.hitFlash > 0) en.hitFlash--;
