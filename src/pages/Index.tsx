@@ -236,7 +236,7 @@ export default function Index() {
                 { label: "НАСТРОЙКИ", screen: "settings" as Screen, icon: "Settings" },
                 { label: "СТАТИСТИКА", screen: "stats" as Screen, icon: "BarChart2" },
               ].map((item, i) => (
-                <button className="menu-item flex items-center gap-4 px-4 py-3.5 text-left w-full font-medium"
+                <button className="menu-item flex items-center gap-4 px-4 py-3.5 text-left w-full mx-0"
                   key={item.screen}
                   onClick={() => navigate(item.screen)}
                   className="menu-item flex items-center gap-4 px-4 py-3.5 text-left w-full"
