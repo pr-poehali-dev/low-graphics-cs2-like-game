@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import Icon from "@/components/ui/icon";
+import GameCanvas from "@/components/GameCanvas";
 
 type Screen = "menu" | "map" | "inventory" | "game" | "settings" | "stats";
 
@@ -184,8 +185,25 @@ export default function Index() {
   const [fovValue, setFovValue] = useState(75);
   const [sensValue, setSensValue] = useState(50);
   const [soundVolume, setSoundVolume] = useState(70);
+  const [playerHP, setPlayerHP] = useState(100);
+  const [playerAmmo, setPlayerAmmo] = useState(30);
+  const [killCount, setKillCount] = useState(0);
+  const [isDead, setIsDead] = useState(false);
 
   const navigate = (s: Screen) => setScreen(s);
+
+  const handleKill = useCallback(() => setKillCount(k => k + 1), []);
+  const handleDeath = useCallback(() => setIsDead(true), []);
+  const handleHealthChange = useCallback((hp: number) => setPlayerHP(hp), []);
+  const handleAmmoChange = useCallback((ammo: number) => setPlayerAmmo(ammo), []);
+
+  const startGame = () => {
+    setPlayerHP(100);
+    setPlayerAmmo(30);
+    setKillCount(0);
+    setIsDead(false);
+    navigate("game");
+  };
 
   const bgImage = "https://cdn.poehali.dev/projects/7f955039-9c5b-42b2-b6dd-82dd7c7c35a5/files/00872038-8afd-4da1-afc4-79572f796ffd.jpg";
 
@@ -305,7 +323,7 @@ export default function Index() {
           </div>
 
           <div className="flex justify-end mt-6">
-            <button onClick={() => navigate("game")}
+            <button onClick={startGame}
               className="clip-bevel-lg px-10 py-4 text-base font-oswald font-bold tracking-widest glow-orange transition-all hover:scale-105 active:scale-95"
               style={{ background: "linear-gradient(135deg, var(--poly-orange), #c04020)", color: "#fff" }}>
               <Icon name="Play" size={16} className="inline mr-2" />В БОЙ
@@ -393,17 +411,116 @@ export default function Index() {
 
       {/* GAME SCREEN */}
       {screen === "game" && (
-        <div className="relative w-full h-full">
-          <div className="absolute inset-0 overflow-hidden">
-            <img src={bgImage} alt="" className="w-full h-full object-cover" style={{ filter: "brightness(0.5) saturate(0.7)" }} />
-            <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse at center, transparent 40%, rgba(13,15,20,0.8) 100%)" }} />
-            <svg className="absolute inset-0 w-full h-full opacity-20" viewBox="0 0 1000 600" preserveAspectRatio="xMidYMid slice">
-              <polygon points="0,600 200,300 400,500" fill="rgba(232,184,75,0.1)" stroke="rgba(232,184,75,0.3)" strokeWidth="1" />
-              <polygon points="800,600 1000,400 1000,600" fill="rgba(224,90,43,0.08)" stroke="rgba(224,90,43,0.2)" strokeWidth="1" />
-              <polygon points="400,0 600,0 500,150" fill="rgba(232,184,75,0.05)" stroke="rgba(232,184,75,0.15)" strokeWidth="1" />
-            </svg>
+        <div className="relative w-full h-full" style={{ background: "#0d0f14" }}>
+          {/* Живой Canvas */}
+          <GameCanvas
+            mapId={selectedMap}
+            onKill={handleKill}
+            onDeath={handleDeath}
+            onHealthChange={handleHealthChange}
+            onAmmoChange={handleAmmoChange}
+            playerHP={playerHP}
+          />
+
+          {/* HUD поверх canvas */}
+          <div className="absolute inset-0 pointer-events-none" style={{ zIndex: 10 }}>
+            {/* Top */}
+            <div className="absolute top-0 left-0 right-0 flex justify-between items-start p-4 pointer-events-auto">
+              <div className="flex items-center gap-3">
+                <div className="clip-bevel px-3 py-1.5 text-xs font-oswald font-semibold tracking-widest"
+                  style={{ background: "rgba(13,15,20,0.9)", color: "var(--poly-gold)", border: "1px solid var(--poly-border)" }}>
+                  СВОБОДНЫЙ БОЙ · {MAPS.find(m => m.id === selectedMap)?.name || ""}
+                </div>
+              </div>
+              <button
+                className="pointer-events-auto clip-bevel px-4 py-1.5 text-xs font-oswald font-semibold tracking-widest transition-all hover:opacity-80"
+                onClick={() => navigate("menu")}
+                style={{ background: "rgba(224,90,43,0.2)", color: "#e05a2b", border: "1px solid #e05a2b" }}>
+                ВЫЙТИ
+              </button>
+            </div>
+
+            {/* Bottom HUD */}
+            <div className="absolute bottom-0 left-0 right-0 flex justify-between items-end p-5 pointer-events-none">
+              {/* HP / Armor */}
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center gap-2">
+                  <Icon name="Heart" size={14} className="pulse-health" style={{ color: "#e85a5a" } as React.CSSProperties} />
+                  <div className="w-40 h-3 clip-bevel overflow-hidden" style={{ background: "rgba(13,15,20,0.8)" }}>
+                    <div className="h-full transition-all duration-200" style={{ width: `${playerHP}%`, background: "linear-gradient(90deg, #c23030, #e85a5a)" }} />
+                  </div>
+                  <span className="text-xs font-oswald font-bold" style={{ color: "#e85a5a" }}>{playerHP}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Icon name="Shield" size={14} style={{ color: "#4ab8d4" }} />
+                  <div className="w-40 h-3 clip-bevel overflow-hidden" style={{ background: "rgba(13,15,20,0.8)" }}>
+                    <div className="h-full w-1/2" style={{ background: "linear-gradient(90deg, #2a7a9a, #4ab8d4)" }} />
+                  </div>
+                  <span className="text-xs font-oswald font-bold" style={{ color: "#4ab8d4" }}>50</span>
+                </div>
+              </div>
+
+              {/* Kill counter */}
+              <div className="flex flex-col items-center gap-1">
+                <div className="text-3xl font-oswald font-bold text-glow-gold" style={{ color: "var(--poly-gold)" }}>{killCount}</div>
+                <div className="text-xs font-rajdhani tracking-widest" style={{ color: "var(--poly-dim)" }}>УБИЙСТВ</div>
+              </div>
+
+              {/* Ammo */}
+              <div className="flex flex-col items-end gap-1">
+                <div className="text-xs font-rajdhani tracking-wider" style={{ color: "var(--poly-dim)" }}>АК-ПОЛИ</div>
+                <div className="flex items-end gap-2">
+                  <span className="text-4xl font-oswald font-bold" style={{ color: playerAmmo === 0 ? "#e85a5a" : "var(--poly-text)" }}>{playerAmmo}</span>
+                  <span className="text-xl font-oswald mb-1" style={{ color: "var(--poly-dim)" }}>/ 30</span>
+                </div>
+                <div className="text-xs font-rajdhani tracking-wider" style={{ color: "var(--poly-gold)" }}>● ШТУРМОВАЯ</div>
+              </div>
+            </div>
+
+            {/* Crosshair */}
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <div className="relative w-8 h-8">
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-px h-2.5" style={{ background: "rgba(232,184,75,0.8)" }} />
+                <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-px h-2.5" style={{ background: "rgba(232,184,75,0.8)" }} />
+                <div className="absolute left-0 top-1/2 -translate-y-1/2 h-px w-2.5" style={{ background: "rgba(232,184,75,0.8)" }} />
+                <div className="absolute right-0 top-1/2 -translate-y-1/2 h-px w-2.5" style={{ background: "rgba(232,184,75,0.8)" }} />
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="w-1 h-1 rounded-full" style={{ background: "rgba(232,184,75,0.6)" }} />
+                </div>
+              </div>
+            </div>
+
+            {/* Hints */}
+            <div className="absolute bottom-24 left-1/2 -translate-x-1/2 flex gap-4 text-xs font-rajdhani pointer-events-none"
+              style={{ color: "var(--poly-dim)" }}>
+              <span>WASD — движение</span>
+              <span>·</span>
+              <span>ЛКМ — огонь</span>
+              <span>·</span>
+              <span>R — перезарядка</span>
+            </div>
           </div>
-          <GameHUD onExit={() => navigate("menu")} />
+
+          {/* Death screen */}
+          {isDead && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center animate-fade-in pointer-events-auto"
+              style={{ background: "rgba(13,0,0,0.85)", zIndex: 20 }}>
+              <div className="text-6xl font-oswald font-black mb-2" style={{ color: "#e85a5a" }}>ВЫ УБИТЫ</div>
+              <div className="text-lg font-rajdhani mb-1" style={{ color: "var(--poly-dim)" }}>Убийств в этом бою: <span style={{ color: "var(--poly-gold)" }}>{killCount}</span></div>
+              <div className="mt-8 flex gap-4">
+                <button onClick={startGame}
+                  className="clip-bevel-lg px-8 py-3 font-oswald font-bold tracking-widest text-sm transition-all hover:scale-105"
+                  style={{ background: "linear-gradient(135deg, var(--poly-orange), #c04020)", color: "#fff" }}>
+                  <Icon name="RotateCcw" size={14} className="inline mr-2" />СНОВА В БОЙ
+                </button>
+                <button onClick={() => navigate("menu")}
+                  className="clip-bevel-lg px-8 py-3 font-oswald font-bold tracking-widest text-sm transition-all hover:scale-105"
+                  style={{ background: "rgba(255,255,255,0.05)", color: "var(--poly-text)", border: "1px solid var(--poly-border)" }}>
+                  ГЛАВНОЕ МЕНЮ
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
