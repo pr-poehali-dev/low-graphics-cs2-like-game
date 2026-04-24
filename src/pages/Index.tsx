@@ -427,80 +427,73 @@ export default function Index() {
 
           {/* HUD поверх canvas */}
           <div className="absolute inset-0 pointer-events-none" style={{ zIndex: 10 }}>
-            {/* Top */}
-            <div className="absolute top-0 left-0 right-0 flex justify-between items-start p-4 pointer-events-auto">
-              <div className="flex items-center gap-3">
-                <div className="clip-bevel px-3 py-1.5 text-xs font-oswald font-semibold tracking-widest"
-                  style={{ background: "rgba(13,15,20,0.9)", color: "var(--poly-gold)", border: "1px solid var(--poly-border)" }}>
-                  СВОБОДНЫЙ БОЙ · {MAPS.find(m => m.id === selectedMap)?.name || ""}
-                </div>
+
+            {/* Top bar */}
+            <div className="absolute top-0 left-0 right-0 flex justify-between items-start p-3 pointer-events-auto">
+              <div className="clip-bevel px-3 py-1.5 text-xs font-oswald font-semibold tracking-widest"
+                style={{ background: "rgba(13,15,20,0.85)", color: "var(--poly-gold)", border: "1px solid var(--poly-border)" }}>
+                POLYWAR · {MAPS.find(m => m.id === selectedMap)?.name || ""}
               </div>
               <button
                 className="pointer-events-auto clip-bevel px-4 py-1.5 text-xs font-oswald font-semibold tracking-widest transition-all hover:opacity-80"
                 onClick={() => navigate("menu")}
                 style={{ background: "rgba(224,90,43,0.2)", color: "#e05a2b", border: "1px solid #e05a2b" }}>
-                ВЫЙТИ
+                ESC / ВЫЙТИ
               </button>
             </div>
 
-            {/* Bottom HUD */}
-            <div className="absolute bottom-0 left-0 right-0 flex justify-between items-end p-5 pointer-events-none">
-              {/* HP / Armor */}
-              <div className="flex flex-col gap-2">
-                <div className="flex items-center gap-2">
-                  <Icon name="Heart" size={14} className="pulse-health" style={{ color: "#e85a5a" } as React.CSSProperties} />
-                  <div className="w-40 h-3 clip-bevel overflow-hidden" style={{ background: "rgba(13,15,20,0.8)" }}>
-                    <div className="h-full transition-all duration-200" style={{ width: `${playerHP}%`, background: "linear-gradient(90deg, #c23030, #e85a5a)" }} />
-                  </div>
-                  <span className="text-xs font-oswald font-bold" style={{ color: "#e85a5a" }}>{playerHP}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Icon name="Shield" size={14} style={{ color: "#4ab8d4" }} />
-                  <div className="w-40 h-3 clip-bevel overflow-hidden" style={{ background: "rgba(13,15,20,0.8)" }}>
-                    <div className="h-full w-1/2" style={{ background: "linear-gradient(90deg, #2a7a9a, #4ab8d4)" }} />
-                  </div>
-                  <span className="text-xs font-oswald font-bold" style={{ color: "#4ab8d4" }}>50</span>
-                </div>
-              </div>
-
-              {/* Kill counter */}
-              <div className="flex flex-col items-center gap-1">
-                <div className="text-3xl font-oswald font-bold text-glow-gold" style={{ color: "var(--poly-gold)" }}>{killCount}</div>
-                <div className="text-xs font-rajdhani tracking-widest" style={{ color: "var(--poly-dim)" }}>УБИЙСТВ</div>
-              </div>
-
-              {/* Ammo */}
-              <div className="flex flex-col items-end gap-1">
-                <div className="text-xs font-rajdhani tracking-wider" style={{ color: "var(--poly-dim)" }}>АК-ПОЛИ</div>
-                <div className="flex items-end gap-2">
-                  <span className="text-4xl font-oswald font-bold" style={{ color: playerAmmo === 0 ? "#e85a5a" : "var(--poly-text)" }}>{playerAmmo}</span>
-                  <span className="text-xl font-oswald mb-1" style={{ color: "var(--poly-dim)" }}>/ 30</span>
-                </div>
-                <div className="text-xs font-rajdhani tracking-wider" style={{ color: "var(--poly-gold)" }}>● ШТУРМОВАЯ</div>
-              </div>
-            </div>
-
-            {/* Crosshair */}
+            {/* Crosshair — всегда по центру */}
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <div className="relative w-8 h-8">
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-px h-2.5" style={{ background: "rgba(232,184,75,0.8)" }} />
-                <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-px h-2.5" style={{ background: "rgba(232,184,75,0.8)" }} />
-                <div className="absolute left-0 top-1/2 -translate-y-1/2 h-px w-2.5" style={{ background: "rgba(232,184,75,0.8)" }} />
-                <div className="absolute right-0 top-1/2 -translate-y-1/2 h-px w-2.5" style={{ background: "rgba(232,184,75,0.8)" }} />
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="w-1 h-1 rounded-full" style={{ background: "rgba(232,184,75,0.6)" }} />
-                </div>
+              <div className="relative w-6 h-6">
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-px h-2" style={{ background: "rgba(255,255,255,0.7)" }} />
+                <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-px h-2" style={{ background: "rgba(255,255,255,0.7)" }} />
+                <div className="absolute left-0 top-1/2 -translate-y-1/2 h-px w-2" style={{ background: "rgba(255,255,255,0.7)" }} />
+                <div className="absolute right-0 top-1/2 -translate-y-1/2 h-px w-2" style={{ background: "rgba(255,255,255,0.7)" }} />
               </div>
             </div>
 
-            {/* Hints */}
-            <div className="absolute bottom-24 left-1/2 -translate-x-1/2 flex gap-4 text-xs font-rajdhani pointer-events-none"
-              style={{ color: "var(--poly-dim)" }}>
-              <span>WASD — движение</span>
-              <span>·</span>
-              <span>ЛКМ — огонь</span>
-              <span>·</span>
-              <span>R — перезарядка</span>
+            {/* Bottom HUD */}
+            <div className="absolute bottom-0 left-0 right-0 pointer-events-none"
+              style={{ background: "linear-gradient(to top, rgba(13,15,20,0.9) 0%, transparent 100%)", padding: "32px 24px 16px" }}>
+              <div className="flex justify-between items-end">
+
+                {/* HP */}
+                <div className="flex flex-col gap-1.5">
+                  <div className="flex items-center gap-2">
+                    <Icon name="Heart" size={13} style={{ color: "#e85a5a" }} />
+                    <span className="text-xs font-oswald tracking-widest" style={{ color: "var(--poly-dim)" }}>ЗДОРОВЬЕ</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="w-44 h-4 clip-bevel overflow-hidden" style={{ background: "rgba(255,255,255,0.08)" }}>
+                      <div className="h-full transition-all duration-200"
+                        style={{ width: `${playerHP}%`, background: playerHP > 50 ? "linear-gradient(90deg,#b02020,#e85a5a)" : "linear-gradient(90deg,#801010,#e82020)" }} />
+                    </div>
+                    <span className="text-2xl font-oswald font-black" style={{ color: playerHP > 50 ? "#e85a5a" : "#ff3030" }}>{playerHP}</span>
+                  </div>
+                </div>
+
+                {/* Kill counter */}
+                <div className="flex flex-col items-center gap-0.5 pb-1">
+                  <div className="text-4xl font-oswald font-black" style={{ color: "var(--poly-gold)", textShadow: "0 0 20px rgba(232,184,75,0.5)" }}>{killCount}</div>
+                  <div className="text-xs font-oswald tracking-[0.2em]" style={{ color: "var(--poly-dim)" }}>УБИЙСТВ</div>
+                </div>
+
+                {/* Ammo */}
+                <div className="flex flex-col items-end gap-1">
+                  <div className="text-xs font-oswald tracking-widest" style={{ color: "var(--poly-dim)" }}>АК-ПОЛИ · ШТУРМОВАЯ</div>
+                  <div className="flex items-end gap-1.5">
+                    <span className="text-4xl font-oswald font-black"
+                      style={{ color: playerAmmo === 0 ? "#e85a5a" : playerAmmo <= 8 ? "#e8b84b" : "var(--poly-text)" }}>
+                      {playerAmmo}
+                    </span>
+                    <span className="text-lg font-oswald mb-1" style={{ color: "var(--poly-dim)" }}>/ 30</span>
+                  </div>
+                  {playerAmmo === 0 && (
+                    <div className="text-xs font-oswald tracking-widest animate-pulse" style={{ color: "#e85a5a" }}>НАЖМИ R — ПЕРЕЗАРЯДКА</div>
+                  )}
+                </div>
+
+              </div>
             </div>
           </div>
 

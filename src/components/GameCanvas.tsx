@@ -9,586 +9,576 @@ interface GameCanvasProps {
   playerHP: number;
 }
 
-// ─── Types ───────────────────────────────────────────────────────────────────
-interface Vec2 { x: number; y: number }
+// ─── Map grids (1 = wall, 0 = floor) ─────────────────────────────────────────
+const MAPS: Record<string, { grid: number[][]; floorColor: string; ceilColor: string; wallColors: string[]; fogColor: string }> = {
+  canyon: {
+    grid: [
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+      [1,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,1],
+      [1,0,1,1,0,0,1,0,1,1,1,0,1,0,0,0,1,1,0,1],
+      [1,0,1,0,0,0,0,0,0,0,1,0,1,0,1,0,0,1,0,1],
+      [1,0,0,0,1,0,1,1,0,0,0,0,0,0,1,1,0,0,0,1],
+      [1,0,1,0,1,0,0,0,0,1,1,0,1,0,0,0,0,1,0,1],
+      [1,0,1,0,0,0,1,0,0,1,0,0,1,0,1,0,0,1,0,1],
+      [1,0,0,0,1,0,1,0,1,1,0,1,0,0,1,0,1,0,0,1],
+      [1,0,1,1,1,0,0,0,0,0,0,1,0,1,0,0,1,1,0,1],
+      [1,0,0,0,0,0,1,0,1,0,0,0,0,1,0,0,0,0,0,1],
+      [1,0,1,0,1,1,1,0,1,0,1,1,0,1,1,0,1,0,1,1],
+      [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+    ],
+    floorColor: "#3a2010",
+    ceilColor:  "#1a0f06",
+    wallColors: ["#7a4020", "#5a2e10"],
+    fogColor: "#1a0f06",
+  },
+  arctic: {
+    grid: [
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+      [1,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,1],
+      [1,0,1,1,0,0,0,0,1,1,1,0,1,0,0,0,1,1,0,1],
+      [1,0,1,0,0,0,1,0,0,0,1,0,1,0,1,0,0,1,0,1],
+      [1,0,0,0,1,0,1,1,0,0,0,0,0,0,1,1,0,0,0,1],
+      [1,0,1,0,1,0,0,0,0,1,1,0,1,0,0,0,0,1,0,1],
+      [1,0,1,0,0,0,1,0,0,1,0,0,1,0,1,0,0,1,0,1],
+      [1,0,0,0,1,0,1,0,1,0,0,1,0,0,1,0,1,0,0,1],
+      [1,0,1,1,1,0,0,0,0,0,0,1,0,1,0,0,1,1,0,1],
+      [1,0,0,0,0,0,1,0,1,0,0,0,0,1,0,0,0,0,0,1],
+      [1,0,1,0,1,1,1,0,1,0,1,1,0,1,1,0,1,0,1,1],
+      [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+    ],
+    floorColor: "#0a1520",
+    ceilColor:  "#050c14",
+    wallColors: ["#2a5070", "#1a3050"],
+    fogColor: "#050c14",
+  },
+  jungle: {
+    grid: [
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+      [1,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,1],
+      [1,0,1,1,0,0,0,0,1,1,1,0,1,0,0,0,1,1,0,1],
+      [1,0,1,0,0,0,1,0,0,0,1,0,1,0,1,0,0,1,0,1],
+      [1,0,0,0,1,0,1,1,0,0,0,0,0,0,1,1,0,0,0,1],
+      [1,0,1,0,1,0,0,0,0,1,1,0,1,0,0,0,0,1,0,1],
+      [1,0,1,0,0,0,1,0,0,1,0,0,1,0,1,0,0,1,0,1],
+      [1,0,0,0,1,0,1,0,1,0,0,1,0,0,1,0,1,0,0,1],
+      [1,0,1,1,1,0,0,0,0,0,0,1,0,1,0,0,1,1,0,1],
+      [1,0,0,0,0,0,1,0,1,0,0,0,0,1,0,0,0,0,0,1],
+      [1,0,1,0,1,1,1,0,1,0,1,1,0,1,1,0,1,0,1,1],
+      [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+    ],
+    floorColor: "#0a1a08",
+    ceilColor:  "#050e04",
+    wallColors: ["#2a5a1a", "#1a3a0a"],
+    fogColor: "#050e04",
+  },
+};
 
-interface Bullet {
+const CELL = 1.0; // world units per cell
+const FOV = Math.PI / 2.8;
+const MAX_DEPTH = 16;
+const ENEMY_SPAWN_POSITIONS: Record<string, Array<{x:number,y:number,angle:number}>> = {
+  canyon: [{x:15.5,y:1.5,angle:Math.PI},{x:17.5,y:3.5,angle:Math.PI*1.5},{x:10.5,y:5.5,angle:0},{x:6.5,y:9.5,angle:Math.PI/2},{x:13.5,y:9.5,angle:Math.PI},{x:3.5,y:5.5,angle:0}],
+  arctic: [{x:15.5,y:1.5,angle:Math.PI},{x:17.5,y:3.5,angle:Math.PI*1.5},{x:10.5,y:5.5,angle:0},{x:6.5,y:9.5,angle:Math.PI/2},{x:13.5,y:9.5,angle:Math.PI},{x:3.5,y:5.5,angle:0}],
+  jungle: [{x:15.5,y:1.5,angle:Math.PI},{x:17.5,y:3.5,angle:Math.PI*1.5},{x:10.5,y:5.5,angle:0},{x:6.5,y:9.5,angle:Math.PI/2},{x:13.5,y:9.5,angle:Math.PI},{x:3.5,y:5.5,angle:0}],
+};
+
+interface Enemy3D {
   id: number;
-  pos: Vec2;
-  vel: Vec2;
+  x: number; y: number;
+  angle: number;
+  hp: number;
+  shootCd: number;
+  hitFlash: number;
+  alive: boolean;
+  state: "patrol"|"chase"|"attack";
+}
+
+interface Projectile {
+  id: number;
+  x: number; y: number;
+  dx: number; dy: number;
   fromPlayer: boolean;
   life: number;
 }
 
-interface Enemy {
-  id: number;
-  pos: Vec2;
-  hp: number;
-  maxHp: number;
-  vel: Vec2;
-  shootCooldown: number;
-  hitFlash: number;
-  angle: number;
-  state: "patrol" | "chase" | "attack";
-  patrolTarget: Vec2;
+interface DamageFlash { life: number }
+
+let _id = 0;
+const uid = () => ++_id;
+
+function lerp(a: number, b: number, t: number) { return a + (b - a) * t; }
+
+function hexToRgb(hex: string): [number, number, number] {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return [r, g, b];
 }
 
-interface Particle {
-  id: number;
-  pos: Vec2;
-  vel: Vec2;
-  life: number;
-  maxLife: number;
-  color: string;
-  size: number;
+function shadedColor(hex: string, shade: number): string {
+  const [r, g, b] = hexToRgb(hex);
+  const s = Math.max(0, Math.min(1, shade));
+  return `rgb(${Math.floor(r*s)},${Math.floor(g*s)},${Math.floor(b*s)})`;
 }
 
-interface Wall { x: number; y: number; w: number; h: number }
-
-// ─── Map configs ──────────────────────────────────────────────────────────────
-const MAP_CONFIGS: Record<string, { bg: string; floor: string; wallColor: string; accentColor: string; walls: Wall[] }> = {
-  canyon: {
-    bg: "#1a0f08",
-    floor: "#2a1a10",
-    wallColor: "#7a4020",
-    accentColor: "#e05a2b",
-    walls: [
-      { x: 100, y: 100, w: 200, h: 30 },
-      { x: 500, y: 80, w: 30, h: 200 },
-      { x: 300, y: 300, w: 150, h: 30 },
-      { x: 700, y: 250, w: 30, h: 180 },
-      { x: 150, y: 450, w: 180, h: 30 },
-      { x: 600, y: 450, w: 200, h: 30 },
-      { x: 400, y: 150, w: 30, h: 120 },
-      { x: 850, y: 150, w: 30, h: 200 },
-      { x: 900, y: 380, w: 150, h: 30 },
-    ],
-  },
-  arctic: {
-    bg: "#080f18",
-    floor: "#0f1a28",
-    wallColor: "#2a5080",
-    accentColor: "#4ab8d4",
-    walls: [
-      { x: 80, y: 120, w: 220, h: 30 },
-      { x: 480, y: 80, w: 30, h: 220 },
-      { x: 280, y: 320, w: 160, h: 30 },
-      { x: 720, y: 220, w: 30, h: 200 },
-      { x: 120, y: 460, w: 200, h: 30 },
-      { x: 620, y: 460, w: 180, h: 30 },
-      { x: 380, y: 160, w: 30, h: 130 },
-      { x: 860, y: 140, w: 30, h: 220 },
-    ],
-  },
-  jungle: {
-    bg: "#081008",
-    floor: "#0f1f0f",
-    wallColor: "#2a5a20",
-    accentColor: "#4ab86a",
-    walls: [
-      { x: 120, y: 90, w: 200, h: 30 },
-      { x: 520, y: 70, w: 30, h: 200 },
-      { x: 320, y: 290, w: 140, h: 30 },
-      { x: 710, y: 240, w: 30, h: 190 },
-      { x: 160, y: 440, w: 190, h: 30 },
-      { x: 610, y: 440, w: 210, h: 30 },
-      { x: 420, y: 140, w: 30, h: 110 },
-      { x: 870, y: 160, w: 30, h: 190 },
-      { x: 200, y: 200, w: 80, h: 80 },
-    ],
-  },
-};
-
-// ─── Helpers ─────────────────────────────────────────────────────────────────
-let nextId = 0;
-const uid = () => ++nextId;
-
-function dist(a: Vec2, b: Vec2) {
-  const dx = a.x - b.x; const dy = a.y - b.y;
-  return Math.sqrt(dx * dx + dy * dy);
-}
-
-function normalize(v: Vec2): Vec2 {
-  const len = Math.sqrt(v.x * v.x + v.y * v.y) || 1;
-  return { x: v.x / len, y: v.y / len };
-}
-
-function rectContains(wall: Wall, p: Vec2, r = 8): boolean {
-  return p.x + r > wall.x && p.x - r < wall.x + wall.w &&
-    p.y + r > wall.y && p.y - r < wall.y + wall.h;
-}
-
-function spawnEnemies(walls: Wall[], count: number): Enemy[] {
-  const safePositions = [
-    { x: 900, y: 480 }, { x: 850, y: 100 }, { x: 200, y: 500 },
-    { x: 950, y: 300 }, { x: 600, y: 500 }, { x: 750, y: 400 },
-    { x: 300, y: 80 },  { x: 900, y: 200 },
-  ];
-  return safePositions.slice(0, count).map((pos) => ({
-    id: uid(),
-    pos: { ...pos },
-    hp: 100,
-    maxHp: 100,
-    vel: { x: 0, y: 0 },
-    shootCooldown: Math.random() * 120 + 60,
-    hitFlash: 0,
-    angle: 0,
-    state: "patrol",
-    patrolTarget: { x: pos.x + (Math.random() - 0.5) * 200, y: pos.y + (Math.random() - 0.5) * 200 },
-  }));
-}
-
-// ─── Draw helpers ─────────────────────────────────────────────────────────────
-function drawPolyChar(ctx: CanvasRenderingContext2D, pos: Vec2, angle: number, color: string, size = 14) {
-  ctx.save();
-  ctx.translate(pos.x, pos.y);
-  ctx.rotate(angle);
-
-  // Body
-  ctx.fillStyle = color;
-  ctx.beginPath();
-  ctx.moveTo(0, -size);
-  ctx.lineTo(size * 0.7, size * 0.4);
-  ctx.lineTo(0, size * 0.1);
-  ctx.lineTo(-size * 0.7, size * 0.4);
-  ctx.closePath();
-  ctx.fill();
-
-  // Gun
-  ctx.fillStyle = color + "cc";
-  ctx.fillRect(0, -size * 0.1, size * 1.1, size * 0.22);
-
-  ctx.restore();
-}
-
-function drawWall(ctx: CanvasRenderingContext2D, wall: Wall, color: string, accent: string) {
-  // Shadow
-  ctx.fillStyle = "rgba(0,0,0,0.4)";
-  ctx.fillRect(wall.x + 4, wall.y + 6, wall.w, wall.h);
-
-  // Body
-  ctx.fillStyle = color;
-  ctx.fillRect(wall.x, wall.y, wall.w, wall.h);
-
-  // Top highlight
-  ctx.fillStyle = accent + "44";
-  ctx.fillRect(wall.x, wall.y, wall.w, 3);
-
-  // Poly detail lines
-  ctx.strokeStyle = accent + "33";
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.moveTo(wall.x + wall.w * 0.3, wall.y);
-  ctx.lineTo(wall.x + wall.w * 0.1, wall.y + wall.h);
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.moveTo(wall.x + wall.w * 0.7, wall.y);
-  ctx.lineTo(wall.x + wall.w * 0.9, wall.y + wall.h);
-  ctx.stroke();
-}
-
-function drawFloorGrid(ctx: CanvasRenderingContext2D, W: number, H: number, floorColor: string, accent: string) {
-  ctx.fillStyle = floorColor;
-  ctx.fillRect(0, 0, W, H);
-
-  const sz = 60;
-  ctx.strokeStyle = accent + "18";
-  ctx.lineWidth = 1;
-  for (let x = 0; x < W; x += sz) {
-    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
-  }
-  for (let y = 0; y < H; y += sz) {
-    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
-  }
-
-  // Diagonal poly lines
-  ctx.strokeStyle = accent + "0a";
-  for (let i = -H; i < W + H; i += 120) {
-    ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i + H, H); ctx.stroke();
-  }
-}
-
-// ─── Component ────────────────────────────────────────────────────────────────
-export default function GameCanvas({ mapId, onKill, onDeath, onHealthChange, onAmmoChange, playerHP }: GameCanvasProps) {
+export default function GameCanvas({ mapId, onKill, onDeath, onHealthChange, onAmmoChange }: GameCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const mapCfg = MAPS[mapId] || MAPS.canyon;
+
   const stateRef = useRef({
-    player: { pos: { x: 100, y: 300 }, vel: { x: 0, y: 0 }, angle: 0, hp: 100, maxHp: 100, shootCd: 0, ammo: 30, maxAmmo: 30, reloading: 0 },
-    bullets: [] as Bullet[],
-    enemies: [] as Enemy[],
-    particles: [] as Particle[],
-    keys: {} as Record<string, boolean>,
-    mouse: { x: 400, y: 300 },
-    kills: 0,
+    px: 1.5, py: 1.5, // player position in world units
+    pAngle: 0.3,       // player view angle
+    pHP: 100,
+    ammo: 30,
+    maxAmmo: 30,
+    reloadTimer: 0,
+    shootCd: 0,
     running: true,
     frameId: 0,
+    enemies: [] as Enemy3D[],
+    projectiles: [] as Projectile[],
+    damageFlash: { life: 0 } as DamageFlash,
     muzzleFlash: 0,
+    keys: {} as Record<string, boolean>,
+    mouseX: 0,
+    lastMouseX: 0,
+    bobTime: 0,
+    kills: 0,
+    pointerLocked: false,
+    mouseDeltaX: 0,
   });
-  const cfg = MAP_CONFIGS[mapId] || MAP_CONFIGS.canyon;
 
-  // Init enemies
+  // Init / reset on mapId change
   useEffect(() => {
     const s = stateRef.current;
-    s.player = { pos: { x: 80, y: 300 }, vel: { x: 0, y: 0 }, angle: 0, hp: 100, maxHp: 100, shootCd: 0, ammo: 30, maxAmmo: 30, reloading: 0 };
-    s.enemies = spawnEnemies(cfg.walls, 6);
-    s.bullets = [];
-    s.particles = [];
-    s.kills = 0;
+    s.px = 1.5; s.py = 1.5; s.pAngle = 0.3;
+    s.pHP = 100; s.ammo = 30; s.reloadTimer = 0; s.shootCd = 0;
+    s.kills = 0; s.muzzleFlash = 0; s.damageFlash = { life: 0 };
+    s.projectiles = [];
     s.running = true;
+    const spawns = ENEMY_SPAWN_POSITIONS[mapId] || ENEMY_SPAWN_POSITIONS.canyon;
+    s.enemies = spawns.map(sp => ({
+      id: uid(), x: sp.x, y: sp.y, angle: sp.angle,
+      hp: 100, shootCd: Math.floor(60 + Math.random()*80),
+      hitFlash: 0, alive: true, state: "patrol",
+    }));
   }, [mapId]);
 
-  const spawnParticles = useCallback((pos: Vec2, color: string, count = 8) => {
-    const s = stateRef.current;
-    for (let i = 0; i < count; i++) {
-      const angle = Math.random() * Math.PI * 2;
-      const speed = Math.random() * 4 + 1;
-      s.particles.push({
-        id: uid(),
-        pos: { x: pos.x, y: pos.y },
-        vel: { x: Math.cos(angle) * speed, y: Math.sin(angle) * speed },
-        life: 30 + Math.random() * 20,
-        maxLife: 50,
-        color,
-        size: Math.random() * 3 + 1,
-      });
-    }
+  // Pointer lock
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const onClick = () => canvas.requestPointerLock();
+    const onLockChange = () => {
+      stateRef.current.pointerLocked = document.pointerLockElement === canvas;
+    };
+    canvas.addEventListener("click", onClick);
+    document.addEventListener("pointerlockchange", onLockChange);
+    return () => {
+      canvas.removeEventListener("click", onClick);
+      document.removeEventListener("pointerlockchange", onLockChange);
+      if (document.pointerLockElement === canvas) document.exitPointerLock();
+    };
+  }, []);
+
+  // Mouse move for rotation
+  useEffect(() => {
+    const onMove = (e: MouseEvent) => {
+      if (stateRef.current.pointerLocked) {
+        stateRef.current.mouseDeltaX += e.movementX;
+      }
+    };
+    window.addEventListener("mousemove", onMove);
+    return () => window.removeEventListener("mousemove", onMove);
   }, []);
 
   // Keyboard
   useEffect(() => {
-    const s = stateRef.current;
     const down = (e: KeyboardEvent) => {
-      s.keys[e.code] = true;
-      // Reload
-      if (e.code === "KeyR" && s.player.ammo < s.player.maxAmmo && s.player.reloading === 0) {
-        s.player.reloading = 90;
+      stateRef.current.keys[e.code] = true;
+      if (e.code === "KeyR") {
+        const s = stateRef.current;
+        if (s.ammo < s.maxAmmo && s.reloadTimer === 0) s.reloadTimer = 90;
       }
     };
-    const up = (e: KeyboardEvent) => { s.keys[e.code] = false; };
+    const up = (e: KeyboardEvent) => { stateRef.current.keys[e.code] = false; };
     window.addEventListener("keydown", down);
     window.addEventListener("keyup", up);
     return () => { window.removeEventListener("keydown", down); window.removeEventListener("keyup", up); };
   }, []);
 
-  // Mouse
+  // Shoot on click
+  const handleShoot = useCallback(() => {
+    const s = stateRef.current;
+    if (!s.pointerLocked || s.shootCd > 0 || s.ammo <= 0 || s.reloadTimer > 0) return;
+    s.ammo--;
+    s.shootCd = 10;
+    s.muzzleFlash = 8;
+    onAmmoChange(s.ammo);
+    // Cast a ray and instantly hit the closest enemy in crosshair center
+    const grid = mapCfg.grid;
+    const angle = s.pAngle;
+    let rx = s.px, ry = s.py;
+    const dxStep = Math.cos(angle) * 0.05;
+    const dyStep = Math.sin(angle) * 0.05;
+    for (let i = 0; i < 300; i++) {
+      rx += dxStep; ry += dyStep;
+      const mx = Math.floor(rx), my = Math.floor(ry);
+      if (my < 0 || my >= grid.length || mx < 0 || mx >= grid[0].length) break;
+      if (grid[my][mx] === 1) break;
+      // Check enemies
+      for (const en of s.enemies) {
+        if (!en.alive) continue;
+        const d = Math.hypot(en.x - rx, en.y - ry);
+        if (d < 0.35) {
+          en.hp -= 34;
+          en.hitFlash = 12;
+          if (en.hp <= 0) {
+            en.alive = false;
+            s.kills++;
+            onKill();
+            setTimeout(() => {
+              if (!stateRef.current.running) return;
+              const spawns = ENEMY_SPAWN_POSITIONS[mapId] || ENEMY_SPAWN_POSITIONS.canyon;
+              const sp = spawns[Math.floor(Math.random() * spawns.length)];
+              stateRef.current.enemies.push({ id: uid(), x: sp.x, y: sp.y, angle: sp.angle, hp: 100, shootCd: 80, hitFlash: 0, alive: true, state: "patrol" });
+            }, 5000);
+          }
+          return;
+        }
+      }
+    }
+  }, [mapId, mapCfg, onKill, onAmmoChange]);
+
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const move = (e: MouseEvent) => {
-      const rect = canvas.getBoundingClientRect();
-      stateRef.current.mouse = { x: e.clientX - rect.left, y: e.clientY - rect.top };
-    };
-    const click = (e: MouseEvent) => {
-      const s = stateRef.current;
-      if (s.player.reloading > 0 || s.player.ammo <= 0 || s.player.shootCd > 0) return;
-      const rect = canvas.getBoundingClientRect();
-      const mx = e.clientX - rect.left;
-      const my = e.clientY - rect.top;
-      const dx = mx - s.player.pos.x;
-      const dy = my - s.player.pos.y;
-      const dir = normalize({ x: dx, y: dy });
-      const spread = (Math.random() - 0.5) * 0.08;
-      s.bullets.push({
-        id: uid(),
-        pos: { x: s.player.pos.x + dir.x * 20, y: s.player.pos.y + dir.y * 20 },
-        vel: { x: (dir.x + spread) * 14, y: (dir.y + spread) * 14 },
-        fromPlayer: true,
-        life: 60,
-      });
-      s.player.ammo--;
-      s.player.shootCd = 8;
-      s.muzzleFlash = 6;
-      onAmmoChange(s.player.ammo);
-      spawnParticles({ x: s.player.pos.x + dir.x * 20, y: s.player.pos.y + dir.y * 20 }, "#e8b84b", 4);
-    };
-    canvas.addEventListener("mousemove", move);
-    canvas.addEventListener("click", click);
-    return () => { canvas.removeEventListener("mousemove", move); canvas.removeEventListener("click", click); };
-  }, [onAmmoChange, spawnParticles]);
+    canvas.addEventListener("click", handleShoot);
+    return () => canvas.removeEventListener("click", handleShoot);
+  }, [handleShoot]);
 
-  // Game loop
+  // ─── Game loop ───────────────────────────────────────────────────────────────
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d")!;
     const W = canvas.width;
     const H = canvas.height;
-    const SPEED = 3.2;
-    const walls = cfg.walls;
+    const HALF_H = H / 2;
+    const grid = mapCfg.grid;
+    const ROWS = grid.length;
+    const COLS = grid[0].length;
+    const MOVE_SPEED = 0.05;
+    const ROT_SPEED = 0.002;
 
-    function resolveWall(pos: Vec2, r = 10): Vec2 {
-      const p = { ...pos };
-      for (const wall of walls) {
-        if (rectContains(wall, p, r)) {
-          const cx = wall.x + wall.w / 2;
-          const cy = wall.y + wall.h / 2;
-          const overlapX = (r + wall.w / 2) - Math.abs(p.x - cx);
-          const overlapY = (r + wall.h / 2) - Math.abs(p.y - cy);
-          if (overlapX < overlapY) p.x += p.x < cx ? -overlapX : overlapX;
-          else p.y += p.y < cy ? -overlapY : overlapY;
-        }
-      }
-      p.x = Math.max(r, Math.min(W - r, p.x));
-      p.y = Math.max(r, Math.min(H - r, p.y));
-      return p;
+    function isWall(x: number, y: number): boolean {
+      const mx = Math.floor(x), my = Math.floor(y);
+      if (my < 0 || my >= ROWS || mx < 0 || mx >= COLS) return true;
+      return grid[my][mx] === 1;
     }
 
-    function bulletHitsWall(b: Bullet): boolean {
-      if (b.pos.x < 0 || b.pos.x > W || b.pos.y < 0 || b.pos.y > H) return true;
-      return walls.some(w => rectContains(w, b.pos, 3));
+    function castRay(px: number, py: number, angle: number): { dist: number; side: number; wallX: number } {
+      const cosA = Math.cos(angle);
+      const sinA = Math.sin(angle);
+      const mapX = Math.floor(px);
+      const mapY = Math.floor(py);
+
+      const deltaDistX = Math.abs(1 / (cosA || 0.0001));
+      const deltaDistY = Math.abs(1 / (sinA || 0.0001));
+
+      let stepX: number, stepY: number;
+      let sideDistX: number, sideDistY: number;
+
+      if (cosA < 0) { stepX = -1; sideDistX = (px - mapX) * deltaDistX; }
+      else           { stepX =  1; sideDistX = (mapX + 1 - px) * deltaDistX; }
+      if (sinA < 0) { stepY = -1; sideDistY = (py - mapY) * deltaDistY; }
+      else           { stepY =  1; sideDistY = (mapY + 1 - py) * deltaDistY; }
+
+      let mx = mapX, my = mapY;
+      let side = 0;
+      for (let i = 0; i < 64; i++) {
+        if (sideDistX < sideDistY) { sideDistX += deltaDistX; mx += stepX; side = 0; }
+        else                        { sideDistY += deltaDistY; my += stepY; side = 1; }
+        if (my < 0 || my >= ROWS || mx < 0 || mx >= COLS || grid[my][mx] === 1) break;
+      }
+
+      let dist: number, wallX: number;
+      if (side === 0) {
+        dist = (mx - px + (1 - stepX) / 2) / (cosA || 0.0001);
+        wallX = py + dist * sinA;
+      } else {
+        dist = (my - py + (1 - stepY) / 2) / (sinA || 0.0001);
+        wallX = px + dist * cosA;
+      }
+      wallX -= Math.floor(wallX);
+      return { dist: Math.abs(dist), side, wallX };
     }
 
     function tick() {
       const s = stateRef.current;
       if (!s.running) return;
 
-      // ── Player movement ──
-      const p = s.player;
-      let vx = 0, vy = 0;
-      if (s.keys["KeyW"] || s.keys["ArrowUp"]) vy -= SPEED;
-      if (s.keys["KeyS"] || s.keys["ArrowDown"]) vy += SPEED;
-      if (s.keys["KeyA"] || s.keys["ArrowLeft"]) vx -= SPEED;
-      if (s.keys["KeyD"] || s.keys["ArrowRight"]) vx += SPEED;
-      if (vx !== 0 && vy !== 0) { vx *= 0.707; vy *= 0.707; }
-      const newPos = resolveWall({ x: p.pos.x + vx, y: p.pos.y + vy });
-      p.pos = newPos;
-      p.angle = Math.atan2(s.mouse.y - p.pos.y, s.mouse.x - p.pos.x) + Math.PI / 2;
+      // ── Rotation from mouse ──
+      if (s.mouseDeltaX !== 0) {
+        s.pAngle += s.mouseDeltaX * ROT_SPEED;
+        s.mouseDeltaX = 0;
+      }
+      // Keyboard rotation fallback
+      if (s.keys["ArrowLeft"])  s.pAngle -= 0.035;
+      if (s.keys["ArrowRight"]) s.pAngle += 0.035;
+
+      // ── Movement ──
+      const moveF = (s.keys["KeyW"] || s.keys["ArrowUp"]) ? MOVE_SPEED : (s.keys["KeyS"] || s.keys["ArrowDown"]) ? -MOVE_SPEED * 0.6 : 0;
+      const moveS = s.keys["KeyA"] ? -MOVE_SPEED * 0.7 : s.keys["KeyD"] ? MOVE_SPEED * 0.7 : 0;
+      const nx = s.px + Math.cos(s.pAngle) * moveF + Math.cos(s.pAngle + Math.PI/2) * moveS;
+      const ny = s.py + Math.sin(s.pAngle) * moveF + Math.sin(s.pAngle + Math.PI/2) * moveS;
+      if (!isWall(nx, s.py)) s.px = nx;
+      if (!isWall(s.px, ny)) s.py = ny;
+
+      // Bob
+      if (moveF !== 0 || moveS !== 0) s.bobTime += 0.12;
 
       // Cooldowns
-      if (p.shootCd > 0) p.shootCd--;
+      if (s.shootCd > 0) s.shootCd--;
       if (s.muzzleFlash > 0) s.muzzleFlash--;
-      if (p.reloading > 0) {
-        p.reloading--;
-        if (p.reloading === 0) { p.ammo = p.maxAmmo; onAmmoChange(p.ammo); }
+      if (s.damageFlash.life > 0) s.damageFlash.life--;
+      if (s.reloadTimer > 0) {
+        s.reloadTimer--;
+        if (s.reloadTimer === 0) { s.ammo = s.maxAmmo; onAmmoChange(s.ammo); }
       }
 
-      // ── Enemies AI ──
+      // ── Enemy AI ──
       for (const en of s.enemies) {
-        const d = dist(en.pos, p.pos);
-        en.angle = Math.atan2(p.pos.y - en.pos.y, p.pos.x - en.pos.x) + Math.PI / 2;
+        if (!en.alive) continue;
+        const dx = s.px - en.x, dy = s.py - en.y;
+        const dist = Math.hypot(dx, dy);
 
-        if (d < 400) en.state = "chase";
-        if (d < 180) en.state = "attack";
-        if (d > 500) en.state = "patrol";
+        if (dist < 8) en.state = "chase";
+        if (dist < 3.5) en.state = "attack";
+        if (dist > 10) en.state = "patrol";
 
-        if (en.state === "patrol") {
-          const td = dist(en.pos, en.patrolTarget);
-          if (td < 20) en.patrolTarget = { x: 100 + Math.random() * (W - 200), y: 100 + Math.random() * (H - 200) };
-          const dir = normalize({ x: en.patrolTarget.x - en.pos.x, y: en.patrolTarget.y - en.pos.y });
-          en.vel = { x: dir.x * 1.2, y: dir.y * 1.2 };
-        } else if (en.state === "chase") {
-          const dir = normalize({ x: p.pos.x - en.pos.x, y: p.pos.y - en.pos.y });
-          en.vel = { x: dir.x * 2, y: dir.y * 2 };
-        } else {
-          const dir = normalize({ x: p.pos.x - en.pos.x, y: p.pos.y - en.pos.y });
-          en.vel = { x: dir.x * 0.8, y: dir.y * 0.8 };
+        en.angle = Math.atan2(dy, dx);
+
+        if (en.state !== "patrol") {
+          const spd = en.state === "attack" ? 0.015 : 0.025;
+          const enx = en.x + Math.cos(en.angle) * spd;
+          const eny = en.y + Math.sin(en.angle) * spd;
+          if (!isWall(enx, en.y)) en.x = enx;
+          if (!isWall(en.x, eny)) en.y = eny;
         }
 
-        en.pos = resolveWall({ x: en.pos.x + en.vel.x, y: en.pos.y + en.vel.y });
         if (en.hitFlash > 0) en.hitFlash--;
 
-        // Enemy shoot
-        if (en.state === "attack" && en.shootCooldown <= 0) {
-          const dir = normalize({ x: p.pos.x - en.pos.x, y: p.pos.y - en.pos.y });
-          const spread = (Math.random() - 0.5) * 0.2;
-          s.bullets.push({
-            id: uid(),
-            pos: { x: en.pos.x + dir.x * 18, y: en.pos.y + dir.y * 18 },
-            vel: { x: (dir.x + spread) * 9, y: (dir.y + spread) * 9 },
-            fromPlayer: false,
-            life: 70,
-          });
-          en.shootCooldown = 80 + Math.random() * 60;
+        if (en.state === "attack" && en.shootCd <= 0) {
+          const spread = (Math.random() - 0.5) * 0.3;
+          s.projectiles.push({ id: uid(), x: en.x, y: en.y, dx: Math.cos(en.angle + spread) * 0.12, dy: Math.sin(en.angle + spread) * 0.12, fromPlayer: false, life: 80 });
+          en.shootCd = 70 + Math.floor(Math.random() * 60);
         }
-        if (en.shootCooldown > 0) en.shootCooldown--;
+        if (en.shootCd > 0) en.shootCd--;
       }
 
-      // ── Bullets ──
-      for (let i = s.bullets.length - 1; i >= 0; i--) {
-        const b = s.bullets[i];
-        b.pos.x += b.vel.x;
-        b.pos.y += b.vel.y;
-        b.life--;
-
-        if (b.life <= 0 || bulletHitsWall(b)) {
-          spawnParticles(b.pos, b.fromPlayer ? "#e8b84b" : "#e85a5a", 5);
-          s.bullets.splice(i, 1);
-          continue;
-        }
-
-        if (b.fromPlayer) {
-          for (let j = s.enemies.length - 1; j >= 0; j--) {
-            const en = s.enemies[j];
-            if (dist(b.pos, en.pos) < 16) {
-              en.hp -= 25;
-              en.hitFlash = 10;
-              spawnParticles(b.pos, "#ff4444", 10);
-              s.bullets.splice(i, 1);
-              if (en.hp <= 0) {
-                spawnParticles(en.pos, cfg.accentColor, 20);
-                s.enemies.splice(j, 1);
-                s.kills++;
-                onKill();
-                // Respawn enemy after delay
-                setTimeout(() => {
-                  if (!stateRef.current.running) return;
-                  const newEn = spawnEnemies(walls, 1)[0];
-                  stateRef.current.enemies.push(newEn);
-                }, 4000);
-              }
-              break;
-            }
-          }
-        } else {
-          if (dist(b.pos, p.pos) < 14) {
-            p.hp = Math.max(0, p.hp - 15);
-            spawnParticles(b.pos, "#e85a5a", 8);
-            s.bullets.splice(i, 1);
-            onHealthChange(p.hp);
-            if (p.hp <= 0) { s.running = false; onDeath(); }
+      // ── Projectiles ──
+      for (let i = s.projectiles.length - 1; i >= 0; i--) {
+        const p = s.projectiles[i];
+        p.x += p.dx; p.y += p.dy; p.life--;
+        if (p.life <= 0 || isWall(p.x, p.y)) { s.projectiles.splice(i, 1); continue; }
+        if (!p.fromPlayer) {
+          if (Math.hypot(p.x - s.px, p.y - s.py) < 0.35) {
+            s.pHP = Math.max(0, s.pHP - 18);
+            s.damageFlash.life = 20;
+            s.projectiles.splice(i, 1);
+            onHealthChange(s.pHP);
+            if (s.pHP <= 0) { s.running = false; onDeath(); }
           }
         }
       }
 
-      // ── Particles ──
-      for (let i = s.particles.length - 1; i >= 0; i--) {
-        const pt = s.particles[i];
-        pt.pos.x += pt.vel.x;
-        pt.pos.y += pt.vel.y;
-        pt.vel.x *= 0.88;
-        pt.vel.y *= 0.88;
-        pt.life--;
-        if (pt.life <= 0) s.particles.splice(i, 1);
+      // ── RENDER ──
+      // Sky gradient
+      const skyGrad = ctx.createLinearGradient(0, 0, 0, HALF_H);
+      skyGrad.addColorStop(0, mapCfg.ceilColor);
+      skyGrad.addColorStop(1, shadedColor(mapCfg.ceilColor, 2.5));
+      ctx.fillStyle = skyGrad;
+      ctx.fillRect(0, 0, W, HALF_H);
+
+      // Floor gradient
+      const floorGrad = ctx.createLinearGradient(0, HALF_H, 0, H);
+      floorGrad.addColorStop(0, shadedColor(mapCfg.floorColor, 2.2));
+      floorGrad.addColorStop(1, mapCfg.floorColor);
+      ctx.fillStyle = floorGrad;
+      ctx.fillRect(0, HALF_H, W, HALF_H);
+
+      // ── Raycasting ──
+      const zBuffer: number[] = new Array(W);
+      const bob = Math.sin(s.bobTime) * 6;
+      const halfH = HALF_H + bob;
+
+      for (let col = 0; col < W; col++) {
+        const rayAngle = s.pAngle - FOV / 2 + (col / W) * FOV;
+        const { dist, side } = castRay(s.px, s.py, rayAngle);
+        const corrDist = dist * Math.cos(rayAngle - s.pAngle); // fish-eye fix
+        zBuffer[col] = corrDist;
+
+        const wallH = Math.min(H * 2, (CELL / corrDist) * (W / 1.4));
+        const wallTop = halfH - wallH / 2;
+        const wallBottom = halfH + wallH / 2;
+
+        // Shading: distance + side darkening
+        const fog = Math.max(0, 1 - corrDist / MAX_DEPTH);
+        const sideDark = side === 1 ? 0.6 : 1.0;
+        const shade = fog * sideDark;
+
+        const wallColorHex = side === 0 ? mapCfg.wallColors[0] : mapCfg.wallColors[1];
+        ctx.fillStyle = shadedColor(wallColorHex, shade);
+        ctx.fillRect(col, wallTop, 1, wallBottom - wallTop);
+
+        // Poly-style edge highlight every ~N units
+        if (corrDist < 4 && col % 3 === 0) {
+          ctx.fillStyle = `rgba(255,255,255,${0.03 * fog})`;
+          ctx.fillRect(col, wallTop, 1, wallBottom - wallTop);
+        }
       }
 
-      // ── Draw ──
-      drawFloorGrid(ctx, W, H, cfg.floor, cfg.accentColor);
+      // ── Sprites (enemies) ──
+      const aliveEnemies = s.enemies.filter(e => e.alive);
+      // Sort by distance descending (paint far first)
+      aliveEnemies.sort((a, b) =>
+        Math.hypot(b.x - s.px, b.y - s.py) - Math.hypot(a.x - s.px, a.y - s.py)
+      );
 
-      // Walls
-      for (const wall of walls) drawWall(ctx, wall, cfg.wallColor, cfg.accentColor);
+      for (const en of aliveEnemies) {
+        const dx = en.x - s.px;
+        const dy = en.y - s.py;
+        const dist = Math.hypot(dx, dy);
+        if (dist < 0.1 || dist > MAX_DEPTH) continue;
 
-      // Particles
-      for (const pt of s.particles) {
-        ctx.save();
-        ctx.globalAlpha = pt.life / pt.maxLife;
-        ctx.fillStyle = pt.color;
-        ctx.beginPath();
-        ctx.arc(pt.pos.x, pt.pos.y, pt.size, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
+        // Transform sprite to camera space
+        const invDet = 1.0 / (Math.cos(s.pAngle) * Math.sin(s.pAngle + Math.PI/2) - Math.sin(s.pAngle) * Math.cos(s.pAngle + Math.PI/2));
+        const tx = invDet * (Math.sin(s.pAngle + Math.PI/2) * dx - Math.cos(s.pAngle + Math.PI/2) * dy);
+        const tz = invDet * (-Math.sin(s.pAngle) * dx + Math.cos(s.pAngle) * dy);
+        if (tz <= 0) continue;
+
+        const spriteScreenX = Math.floor(W / 2 * (1 + tx / tz));
+        const spriteH = Math.abs(Math.floor(H / tz));
+        const spriteW = spriteH;
+        const drawStartY = HALF_H - spriteH / 2 + bob;
+        const drawStartX = spriteScreenX - spriteW / 2;
+
+        if (spriteScreenX < -spriteW || spriteScreenX > W + spriteW) continue;
+
+        const fog = Math.max(0, 1 - dist / MAX_DEPTH);
+        const isHit = en.hitFlash > 0 && en.hitFlash % 2 === 0;
+
+        // Draw enemy as low-poly triangle soldier shape
+        for (let sx = Math.max(0, drawStartX); sx < Math.min(W, drawStartX + spriteW); sx++) {
+          if (tz >= zBuffer[sx]) continue; // occluded by wall
+          const texX = (sx - drawStartX) / spriteW; // 0..1 across sprite
+
+          // Body shape: vary height per column to get triangle silhouette
+          const bodyBottom = drawStartY + spriteH * 0.9;
+          const bodyTop = drawStartY + spriteH * (0.15 + Math.abs(texX - 0.5) * 0.2);
+          const h = bodyBottom - bodyTop;
+          if (h <= 0) continue;
+
+          const alpha = fog * (isHit ? 1.5 : 1.0);
+          const baseColor = isHit ? [255, 80, 80] : en.state === "attack" ? [220, 80, 50] : [180, 140, 80];
+          const shade = (0.6 + 0.4 * (1 - Math.abs(texX - 0.5) * 2));
+          ctx.fillStyle = `rgba(${Math.floor(baseColor[0]*shade)},${Math.floor(baseColor[1]*shade)},${Math.floor(baseColor[2]*shade)},${Math.min(1, alpha)})`;
+          ctx.fillRect(sx, bodyTop, 1, h);
+
+          // Head
+          const headR = spriteH * 0.12;
+          const headY = drawStartY + spriteH * 0.07;
+          if (sx === Math.floor(spriteScreenX)) {
+            ctx.fillStyle = `rgba(${Math.floor(baseColor[0]*0.85)},${Math.floor(baseColor[1]*0.85)},${Math.floor(baseColor[2]*0.85)},${Math.min(1, alpha)})`;
+            ctx.fillRect(spriteScreenX - headR, headY, headR * 2, headR * 2);
+          }
+        }
+
+        // HP bar above sprite
+        if (dist < 6) {
+          const barW = spriteW * 0.8;
+          const barX = spriteScreenX - barW / 2;
+          const barY = drawStartY - 8;
+          ctx.fillStyle = "rgba(0,0,0,0.6)";
+          ctx.fillRect(barX, barY, barW, 4);
+          ctx.fillStyle = en.hp > 60 ? "#4ab84a" : en.hp > 30 ? "#e8b84b" : "#e85a5a";
+          ctx.fillRect(barX, barY, barW * (en.hp / 100), 4);
+        }
       }
 
-      // Bullets
-      for (const b of s.bullets) {
+      // ── Enemy projectiles (render as dots) ──
+      for (const proj of s.projectiles) {
+        if (proj.fromPlayer) continue;
+        const dx = proj.x - s.px;
+        const dy = proj.y - s.py;
+        const dist = Math.hypot(dx, dy);
+        if (dist < 0.1) continue;
+
+        const invDet = 1.0 / (Math.cos(s.pAngle) * Math.sin(s.pAngle + Math.PI/2) - Math.sin(s.pAngle) * Math.cos(s.pAngle + Math.PI/2));
+        const tx = invDet * (Math.sin(s.pAngle + Math.PI/2) * dx - Math.cos(s.pAngle + Math.PI/2) * dy);
+        const tz = invDet * (-Math.sin(s.pAngle) * dx + Math.cos(s.pAngle) * dy);
+        if (tz <= 0) continue;
+        const screenX = Math.floor(W / 2 * (1 + tx / tz));
+        const size = Math.max(2, Math.floor(H / tz / 8));
+        const screenY = HALF_H;
+        if (screenX < 0 || screenX >= W) continue;
+
         ctx.save();
-        ctx.globalAlpha = b.life / 60;
-        const col = b.fromPlayer ? "#e8e870" : "#ff6060";
-        ctx.shadowColor = col;
+        ctx.shadowColor = "#ff6060";
         ctx.shadowBlur = 8;
-        ctx.fillStyle = col;
+        ctx.fillStyle = "#ff8080";
         ctx.beginPath();
-        ctx.arc(b.pos.x, b.pos.y, b.fromPlayer ? 3 : 2.5, 0, Math.PI * 2);
+        ctx.arc(screenX, screenY, size, 0, Math.PI * 2);
         ctx.fill();
-        // Trail
-        ctx.strokeStyle = col + "88";
-        ctx.lineWidth = 1.5;
-        ctx.beginPath();
-        ctx.moveTo(b.pos.x, b.pos.y);
-        ctx.lineTo(b.pos.x - b.vel.x * 3, b.pos.y - b.vel.y * 3);
-        ctx.stroke();
         ctx.restore();
       }
 
-      // Enemies
-      for (const en of s.enemies) {
-        // HP bar
-        const barW = 32;
-        const hpPct = en.hp / en.maxHp;
-        ctx.fillStyle = "rgba(0,0,0,0.6)";
-        ctx.fillRect(en.pos.x - barW / 2, en.pos.y - 26, barW, 5);
-        ctx.fillStyle = hpPct > 0.5 ? "#4ab84a" : hpPct > 0.25 ? "#e8b84b" : "#e85a5a";
-        ctx.fillRect(en.pos.x - barW / 2, en.pos.y - 26, barW * hpPct, 5);
-
-        // Flash on hit
-        const col = en.hitFlash > 0
-          ? (en.hitFlash % 2 === 0 ? "#ffffff" : "#e85a5a")
-          : cfg.accentColor + "dd";
-
-        // Shadow
-        ctx.save();
-        ctx.globalAlpha = 0.3;
-        ctx.fillStyle = "#000";
-        ctx.beginPath();
-        ctx.ellipse(en.pos.x + 3, en.pos.y + 5, 12, 6, 0, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
-
-        drawPolyChar(ctx, en.pos, en.angle, col);
-
-        // State indicator dot
-        const dotCol = en.state === "attack" ? "#e85a5a" : en.state === "chase" ? "#e8b84b" : "#4ab84a";
-        ctx.fillStyle = dotCol;
-        ctx.beginPath();
-        ctx.arc(en.pos.x, en.pos.y - 30, 3, 0, Math.PI * 2);
-        ctx.fill();
+      // ── Damage vignette ──
+      if (s.damageFlash.life > 0) {
+        const alpha = (s.damageFlash.life / 20) * 0.5;
+        const grad = ctx.createRadialGradient(W/2, H/2, H*0.2, W/2, H/2, H*0.8);
+        grad.addColorStop(0, `rgba(200,0,0,0)`);
+        grad.addColorStop(1, `rgba(200,0,0,${alpha})`);
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, W, H);
       }
 
-      // Player shadow
-      ctx.save();
-      ctx.globalAlpha = 0.35;
-      ctx.fillStyle = "#000";
-      ctx.beginPath();
-      ctx.ellipse(p.pos.x + 3, p.pos.y + 5, 13, 6, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
-
-      // Muzzle flash
+      // ── Muzzle flash ──
       if (s.muzzleFlash > 0) {
+        const alpha = s.muzzleFlash / 8;
         ctx.save();
-        ctx.globalAlpha = s.muzzleFlash / 6;
-        ctx.fillStyle = "#fff8a0";
-        ctx.shadowColor = "#e8b84b";
-        ctx.shadowBlur = 20;
-        const dir = normalize({ x: s.mouse.x - p.pos.x, y: s.mouse.y - p.pos.y });
-        ctx.beginPath();
-        ctx.arc(p.pos.x + dir.x * 22, p.pos.y + dir.y * 22, 7, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.globalAlpha = alpha * 0.25;
+        ctx.fillStyle = "#ffe080";
+        ctx.fillRect(0, 0, W, H);
         ctx.restore();
       }
 
-      // Player
-      drawPolyChar(ctx, p.pos, p.angle, "#e8b84b");
+      // ── Vignette (always) ──
+      const vign = ctx.createRadialGradient(W/2, H/2, H*0.3, W/2, H/2, H*0.85);
+      vign.addColorStop(0, "rgba(0,0,0,0)");
+      vign.addColorStop(1, "rgba(0,0,0,0.55)");
+      ctx.fillStyle = vign;
+      ctx.fillRect(0, 0, W, H);
 
-      // Player glow
-      ctx.save();
-      ctx.globalAlpha = 0.15;
-      ctx.fillStyle = "#e8b84b";
-      ctx.shadowColor = "#e8b84b";
-      ctx.shadowBlur = 30;
-      ctx.beginPath();
-      ctx.arc(p.pos.x, p.pos.y, 18, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
+      // ── Weapon ──
+      drawWeapon(ctx, W, H, s.bobTime, s.muzzleFlash, s.reloadTimer);
 
-      // Reload indicator
-      if (p.reloading > 0) {
-        const pct = 1 - p.reloading / 90;
+      // ── Pointer lock hint ──
+      if (!s.pointerLocked) {
         ctx.save();
-        ctx.strokeStyle = "#e8b84b";
-        ctx.lineWidth = 3;
-        ctx.globalAlpha = 0.8;
-        ctx.beginPath();
-        ctx.arc(p.pos.x, p.pos.y, 22, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * pct);
-        ctx.stroke();
-        ctx.restore();
-      }
-
-      // Ammo empty warning
-      if (p.ammo === 0 && p.reloading === 0) {
-        ctx.save();
-        ctx.fillStyle = "#e85a5a";
-        ctx.font = "bold 11px Oswald, sans-serif";
+        ctx.fillStyle = "rgba(0,0,0,0.65)";
+        ctx.fillRect(0, 0, W, H);
+        ctx.fillStyle = "#e8b84b";
+        ctx.font = "bold 28px Oswald, sans-serif";
         ctx.textAlign = "center";
-        ctx.fillText("НАЖМИ R — ПЕРЕЗАРЯДКА", p.pos.x, p.pos.y - 38);
+        ctx.fillText("КЛИКНИ ДЛЯ ЗАХВАТА МЫШИ", W/2, H/2 - 16);
+        ctx.fillStyle = "#8899aa";
+        ctx.font = "16px Rajdhani, sans-serif";
+        ctx.fillText("WASD — движение  |  Мышь — прицел  |  ЛКМ — огонь  |  R — перезарядка", W/2, H/2 + 18);
         ctx.restore();
       }
 
@@ -600,16 +590,112 @@ export default function GameCanvas({ mapId, onKill, onDeath, onHealthChange, onA
     return () => {
       s.running = false;
       cancelAnimationFrame(s.frameId);
+      if (document.pointerLockElement === canvas) document.exitPointerLock();
     };
-  }, [mapId, cfg, onKill, onDeath, onHealthChange, onAmmoChange, spawnParticles]);
+  }, [mapId, mapCfg, onHealthChange, onAmmoChange, onDeath]);
 
   return (
     <canvas
       ref={canvasRef}
-      width={1100}
-      height={580}
-      className="absolute inset-0 w-full h-full cursor-crosshair"
-      style={{ imageRendering: "pixelated" }}
+      width={960}
+      height={560}
+      className="absolute inset-0 w-full h-full"
+      style={{ cursor: "none" }}
     />
   );
 }
+
+// ─── Weapon draw ──────────────────────────────────────────────────────────────
+function drawWeapon(ctx: CanvasRenderingContext2D, W: number, H: number, bobTime: number, muzzleFlash: number, reloadTimer: number) {
+  const bobX = Math.sin(bobTime * 0.5) * 10;
+  const bobY = Math.abs(Math.sin(bobTime)) * 8;
+  const reloadOffset = reloadTimer > 0 ? lerp(0, 80, Math.sin((1 - reloadTimer / 90) * Math.PI)) : 0;
+  const cx = W / 2 + 80 + bobX;
+  const cy = H - 60 + bobY + reloadOffset;
+
+  ctx.save();
+
+  // Gun body — low poly style
+  ctx.fillStyle = "#3a3a3a";
+  // Main body
+  ctx.beginPath();
+  ctx.moveTo(cx - 80, cy + 20);
+  ctx.lineTo(cx + 40, cy + 20);
+  ctx.lineTo(cx + 50, cy - 10);
+  ctx.lineTo(cx + 20, cy - 30);
+  ctx.lineTo(cx - 60, cy - 30);
+  ctx.lineTo(cx - 80, cy - 10);
+  ctx.closePath();
+  ctx.fill();
+
+  // Barrel
+  ctx.fillStyle = "#2a2a2a";
+  ctx.beginPath();
+  ctx.moveTo(cx + 20, cy - 18);
+  ctx.lineTo(cx + 120, cy - 18);
+  ctx.lineTo(cx + 120, cy - 6);
+  ctx.lineTo(cx + 20, cy - 6);
+  ctx.closePath();
+  ctx.fill();
+
+  // Grip
+  ctx.fillStyle = "#4a3020";
+  ctx.beginPath();
+  ctx.moveTo(cx - 20, cy + 20);
+  ctx.lineTo(cx, cy + 20);
+  ctx.lineTo(cx - 10, cy + 60);
+  ctx.lineTo(cx - 35, cy + 55);
+  ctx.closePath();
+  ctx.fill();
+
+  // Mag
+  ctx.fillStyle = "#252525";
+  ctx.beginPath();
+  ctx.moveTo(cx - 40, cy + 20);
+  ctx.lineTo(cx - 20, cy + 20);
+  ctx.lineTo(cx - 25, cy + 50);
+  ctx.lineTo(cx - 48, cy + 45);
+  ctx.closePath();
+  ctx.fill();
+
+  // Highlight edge
+  ctx.strokeStyle = "#606060";
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(cx - 80, cy - 10);
+  ctx.lineTo(cx - 60, cy - 30);
+  ctx.lineTo(cx + 20, cy - 30);
+  ctx.stroke();
+
+  // Scope
+  ctx.fillStyle = "#1a1a1a";
+  ctx.fillRect(cx - 30, cy - 38, 40, 10);
+  ctx.fillStyle = "#203050";
+  ctx.fillRect(cx - 28, cy - 36, 14, 6);
+
+  // Muzzle flash
+  if (muzzleFlash > 0) {
+    const alpha = muzzleFlash / 8;
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = "#ffe080";
+    ctx.shadowColor = "#ffe080";
+    ctx.shadowBlur = 20;
+    // Star shape
+    for (let i = 0; i < 6; i++) {
+      const a = (i / 6) * Math.PI * 2;
+      const r = 18 + Math.random() * 10;
+      ctx.beginPath();
+      ctx.moveTo(cx + 120, cy - 12);
+      ctx.lineTo(cx + 120 + Math.cos(a) * r, cy - 12 + Math.sin(a) * r);
+      ctx.lineTo(cx + 120 + Math.cos(a + 0.3) * 6, cy - 12 + Math.sin(a + 0.3) * 6);
+      ctx.closePath();
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  ctx.restore();
+}
+
+function lerp(a: number, b: number, t: number) { return a + (b - a) * t; }
